@@ -135,3 +135,56 @@ for letter in alphabeticalRange {
     print(letter) // prints a to z...
 }
 
+
+
+//Swift Copilot - solution
+class CopilotSolution {
+    
+    func findSequence() {
+        let ar = [2, 5, 6, 7, 8, 10, 14, 17, 18, 25]
+        //let ar = [1,2,3,5,6,7,8,12,21,34,35,44,45,46,47,48]
+        //let ar = [5,6,7,8]
+
+        print("Find sequence in array:")
+        print("Input: ", ar)
+
+        var output: [String] = [] // To store the result strings
+        var start = ar[0] // Start of the current sequence
+        var end = start  // End of the current sequence
+
+        for i in 1..<ar.count {
+            if ar[i] == end + 1 {
+                // Continue the sequence
+                end = ar[i]
+            } else {
+                // Sequence breaks, append the range or single number to output
+                if start == end {
+                    output.append("\(start)")
+                } else {
+                    output.append("\(start)-\(end)")
+                }
+                // Start a new sequence
+                start = ar[i]
+                end = start
+            }
+        }
+
+        // Handle the last sequence
+        if start == end {
+            output.append("\(start)")
+        } else {
+            output.append("\(start)-\(end)")
+        }
+
+        print("Final-output:", output.joined(separator: ","))
+    }
+}
+
+CopilotSolution().findSequence()
+
+/*
+ Complexity:
+ Time Complexity: O(n), where n is the length of the array.
+ Space Complexity: O(n), for the output array.
+ This approach is cleaner, more efficient, and handles edge cases effectively.
+ */
