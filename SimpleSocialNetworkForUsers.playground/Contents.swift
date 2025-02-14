@@ -31,80 +31,69 @@ import UIKit
  Implementation:
  */
 
+/*
+ Naming Strategy
+ userId → Refers to the user performing the action (e.g., posting, following, or unfollowing).
+ targetUserId → Refers to the user being followed or unfollowed (instead of followeeId, which might be confusing).
+ postId → Clearly represents the ID of a post.
+ */
 
-class User {
-    let id: Int
-    var posts: [(Int, String)] // Stores (timestamp, post)
-    var followers: Set<Int>    // Stores user IDs of followers
-
-    init(id: Int) {
-        self.id = id
-        self.posts = []
-        self.followers = []
-    }
-
-    func addPost(_ post: String, timestamp: Int) {
-        posts.append((timestamp, post))
-    }
+struct SocialPost {
+    let userId: Int
+    let postId: String
+    let timestamp: Int  // Added back timestamp for proper ordering
 }
 
-class SocialNetwork {
-    private var users: [Int: User] = [:] // User ID -> User object
-    private var timestamp: Int = 0       // Used to order posts
+class TalechSocial {
+    private var users: [Int: User] = [:]
+    private var posts: [SocialPost] = []
+    private var timestamp: Int = 0  // Keeps track of post order
 
-    // Create a new post
-    func createPost(userId: Int, post: String) {
-        if users[userId] == nil {
-            users[userId] = User(id: userId)
-        }
-        users[userId]?.addPost(post, timestamp: timestamp)
-        timestamp += 1
+    struct User {
+        let userId: Int
+        var following: Set<Int> = []  // Stores user IDs that this user follows
     }
 
-    // Follow a user
-    func follow(followerId: Int, followeeId: Int) {
-        if users[followerId] == nil {
-            users[followerId] = User(id: followerId)
-        }
-        if users[followeeId] == nil {
-            users[followeeId] = User(id: followeeId)
-        }
-        users[followerId]?.followers.insert(followeeId)
+    // Create a new post
+    func createPost(userId: Int, postId: String) {
+        posts.append(SocialPost(userId: userId, postId: postId, timestamp: timestamp))
+        timestamp += 1  // Increment timestamp for ordering
+    }
+
+    // Follow another user
+    func follow(userId: Int, targetUserId: Int) {
+        if users[userId] == nil { users[userId] = User(userId: userId) }
+        if users[targetUserId] == nil { users[targetUserId] = User(userId: targetUserId) }
+        users[userId]?.following.insert(targetUserId)
     }
 
     // Unfollow a user
-    func unfollow(followerId: Int, followeeId: Int) {
-        users[followerId]?.followers.remove(followeeId)
+    func unfollow(userId: Int, targetUserId: Int) {
+        users[userId]?.following.remove(targetUserId)
     }
 
-    // Get the user's feed (latest 10 posts from user + followees)
+    // Retrieve feed (latest 10 posts)
     func getFeed(userId: Int) -> [String] {
         guard let user = users[userId] else { return [] }
-        
-        var allPosts: [(Int, String)] = user.posts // Get user's posts
-        
-        // Add followees' posts
-        for followeeId in user.followers {
-            if let followee = users[followeeId] {
-                allPosts.append(contentsOf: followee.posts)
-            }
-        }
 
-        // Sort posts by timestamp (most recent first) and get top 10
-        return allPosts.sorted { $0.0 > $1.0 }
-                       .prefix(10)
-                       .map { $0.1 }
+        // Get posts from user and followed users
+        let feedPosts = posts.filter { $0.userId == userId || user.following.contains($0.userId) }
+                             .sorted { $0.timestamp > $1.timestamp }  // Sort by most recent first
+                             .prefix(10)  // Get last 10 posts
+                             .map { $0.postId }
+
+        return Array(feedPosts)
     }
 }
 
 // Example usage
-let network = SocialNetwork()
+let network = TalechSocial()
 
-network.createPost(userId: 1, post: "Hello world!")
-network.createPost(userId: 2, post: "Swift is awesome!")
-network.follow(followerId: 1, followeeId: 2)
-network.createPost(userId: 2, post: "Learning Swift concurrency.")
-network.createPost(userId: 1, post: "Building a social network!")
+network.createPost(userId: 1, postId: "Hello world!")
+network.createPost(userId: 2, postId: "Swift is awesome!")
+network.follow(userId: 1, targetUserId: 2)
+network.createPost(userId: 2, postId: "Learning Swift concurrency.")
+network.createPost(userId: 1, postId: "Building a social network!")
 
 print(network.getFeed(userId: 1)) // Expected: 10 most recent posts from user 1 and followed users
 
