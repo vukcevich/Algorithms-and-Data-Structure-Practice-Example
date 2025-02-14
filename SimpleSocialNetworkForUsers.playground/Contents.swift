@@ -41,13 +41,12 @@ import UIKit
 struct SocialPost {
     let userId: Int
     let postId: String
-    let timestamp: Int  // Added back timestamp for proper ordering
+    let timestamp: Date  // Changed from Int to Date
 }
 
 class TalechSocial {
     private var users: [Int: User] = [:]
     private var posts: [SocialPost] = []
-    private var timestamp: Int = 0  // Keeps track of post order
 
     struct User {
         let userId: Int
@@ -56,8 +55,8 @@ class TalechSocial {
 
     // Create a new post
     func createPost(userId: Int, postId: String) {
-        posts.append(SocialPost(userId: userId, postId: postId, timestamp: timestamp))
-        timestamp += 1  // Increment timestamp for ordering
+        let newPost = SocialPost(userId: userId, postId: postId, timestamp: Date())
+        posts.append(newPost)
     }
 
     // Follow another user
@@ -78,11 +77,18 @@ class TalechSocial {
 
         // Get posts from user and followed users
         let feedPosts = posts.filter { $0.userId == userId || user.following.contains($0.userId) }
-                             .sorted { $0.timestamp > $1.timestamp }  // Sort by most recent first
-                             .prefix(10)  // Get last 10 posts
-                             .map { $0.postId }
+                             .sorted { $0.timestamp > $1.timestamp }  // Sort by latest first
+                             .prefix(10)  // Get latest 10 posts
+                             .map { "\($0.postId) - \(formatDate($0.timestamp))" } // Format for output
 
         return Array(feedPosts)
+    }
+
+    // Helper function to format date
+    private func formatDate(_ date: Date) -> String {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "yyyy-MM-dd HH:mm:ss.SSSS"  // Customizable date format
+        return formatter.string(from: date)
     }
 }
 
